@@ -1,19 +1,19 @@
-# Build
-FROM golang:1.23
+FROM golang:1.22.1
 
 WORKDIR /app
 
-ENV APP_NAME="todo_server"
-ENV TODO_PORT=7550
-ENV TODO_DBFILE=../scheduler.db
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV TODO_PORT=7540
+ENV TODO_DBFILE="scheduler.db"
 
 
 COPY . .
 
 RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./todo_server main.go
 
-EXPOSE $TODO_PORT
+RUN go build -o ./todo_app 
 
-CMD ["./todo_server"]
+EXPOSE ${TODO_PORT}
 
+CMD ["./todo_app"]
