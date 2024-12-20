@@ -12,7 +12,7 @@ import (
 
 // Структура правил повторения задачи
 type RepeatRules struct {
-	datePart string  // часть даты d,m,y или w
+	DatePart string  // часть даты d,m,y или w
 	nums     [][]int // дополнительные параметры
 }
 
@@ -45,17 +45,22 @@ func NextDate(now string, date string, repeat string) (string, error) {
 		return "", err
 	}
 
-	rules, err := parseRepeat(repeat)
+	rules, err := ParseRepeat(repeat)
 	if err != nil {
 		return "", err
 	}
-	if rules.datePart == "" {
+	if rules.DatePart == "" {
 		return "", nil
 	}
 
 	var nextDate time.Time
 
-	switch rules.datePart {
+	greaterDate := nowDate // выясняем какая дата больше now или дата начала отсчета
+	if nowDate.Before(begDate) {
+		greaterDate = begDate
+	}
+
+	switch rules.DatePart {
 	case "y":
 		diff := nowDate.Year() - begDate.Year()
 		if diff > 0 {
@@ -92,7 +97,32 @@ func NextDate(now string, date string, repeat string) (string, error) {
 		}
 
 	case "w":
-		return "", errors.New("Формат не поддерживается 'w'")
+		if len(rules.nums) != 1 {
+			return "", errors.New("invalid number of additional arguments for date part 'w'")
+		}
+		if len(rules.nums[0]) < 1 {
+			return "", errors.New("invalid number of additional arguments for date part 'w'")
+		}
+		// находим минимальную положительную разницу между текущим днем недели и днями из правила
+		weekday := int(greaterDate.Weekday())
+		minDiff := 8
+		for _, wd := range rules.nums[0] {
+			if wd < 1 || wd > 7 {
+				return "", errors.New("invalid number of additional arguments for date part 'w', value must be between 1 and 7")
+			}
+
+			curDiff := 0
+			if wd > weekday {
+				curDiff = wd - weekday
+			} else {
+				curDiff = 7 - weekday + wd
+			}
+
+			if curDiff < minDiff {
+				minDiff = curDiff
+			}
+		}
+		nextDate = greaterDate.AddDate(0, 0, minDiff)
 
 	}
 
@@ -100,9 +130,9 @@ func NextDate(now string, date string, repeat string) (string, error) {
 }
 
 // ParseRepeat парсит правило повторения задач repeat и возвращает результат в виде структуры RepeatRules
-func parseRepeat(repeat string) (RepeatRules, error) {
+func ParseRepeat(repeat string) (RepeatRules, error) {
 	if repeat := strings.TrimSpace(repeat); repeat == "" {
-		return RepeatRules{datePart: ""}, nil
+		return RepeatRules{DatePart: ""}, nil
 	}
 
 	repeatRules := RepeatRules{}
@@ -111,7 +141,7 @@ func parseRepeat(repeat string) (RepeatRules, error) {
 	if !slices.Contains(PossibleVals, rules[0]) {
 		return RepeatRules{}, errors.New("Отклонение от правил")
 	}
-	repeatRules.datePart = rules[0]
+	repeatRules.DatePart = rules[0]
 
 	// парсим правило и попутно проверяем на ошибки формата
 	for i, v := range rules[1:] {
