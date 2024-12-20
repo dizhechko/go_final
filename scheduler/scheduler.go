@@ -98,17 +98,17 @@ func NextDate(now string, date string, repeat string) (string, error) {
 
 	case "w":
 		if len(rules.nums) != 1 {
-			return "", errors.New("invalid number of additional arguments for date part 'w'")
+			return "", errors.New("неверный параметр выбора дня недели 'w'")
 		}
 		if len(rules.nums[0]) < 1 {
-			return "", errors.New("invalid number of additional arguments for date part 'w'")
+			return "", errors.New("неверный параметр выбора дня недели 'w'")
 		}
 		// находим минимальную положительную разницу между текущим днем недели и днями из правила
 		weekday := int(greaterDate.Weekday())
 		minDiff := 8
 		for _, wd := range rules.nums[0] {
 			if wd < 1 || wd > 7 {
-				return "", errors.New("invalid number of additional arguments for date part 'w', value must be between 1 and 7")
+				return "", errors.New("неверный параметр выбора дня недели 'w', значение between (1 , 7)
 			}
 
 			curDiff := 0
